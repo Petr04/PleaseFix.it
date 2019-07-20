@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% load status %}
+
+{% block content %}
+
+<details>
+	<summary>Фильтр</summary>
+	<form method="GET">
+		<div class="form-group">
+			<input type="text" name="username" placeholder="Имя пользователя" />
+		</div>
+		{% for value, label in status_variants %}
+		<div class="form-group">
+			<input type="radio" name="status" value='{{ value }}' />
+			<label>{{ label }}</label>
+		</div>
+		{% endfor %}
+		<button type="submit" class="btn btn-primary">Применить</button>
+	</form>
+</details>
+
+{% for prob in probs %}
+<p>
+	<p>
+		<h3>{{ prob.title }}</h3>
+	</p>
+	<p>
+		Пользователь {{ prob.user.username }}
+	</p>
+	<p>
+		Комната №{{ prob.room }}
+	</p>
+	<p>
+		{{ prob.text }}
+	</p>
+	<p>
+		Статус: {{ prob|status }}
+	</p>
+</p>
+{% endfor %}
+
+{% endblock %}
