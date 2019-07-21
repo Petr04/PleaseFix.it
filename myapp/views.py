@@ -6,19 +6,50 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.contrib import messages
 
-from myapp.models import Problem
+from myapp.models import Problem, UserProfile
 
 # Create your views here.
 
 def index(request):
-	pars_no_username = {k: v for k, v in list(request.GET.items())[1:]}
-	if request.GET.get('username', '') != '':
-		probs = Problem.objects.filter(
-			user=User.objects.filter(username=request.GET['username'])[0],
-			**pars_no_username
-		)
-	else:
-		probs = Problem.objects.filter(**pars_no_username)
+	if request.GET.get('toggle', '') != '':
+		prob = Problem.objects.get(pk=request.GET['toggle'])
+		if prob.status == 'new':
+			prob.fixer = request.user
+			prob.status = 'solving'
+		else:
+			prob.status = 'solved'
+		prob.save()
+
+		return redirect('/')
+
+	pars_keywords = {}
+	pars_user = {}
+	for k, v in list(request.GET.items()):
+		if v:
+			if k not in ('username', 'fixer'):
+				pars_keywords[k] = v
+			else:
+				pars_user[k] = v
+
+
+	replace = {'username': 'user'}
+	user_keywords = {}
+	for k, v in pars_user.items():
+		k_db = replace.get(k, k)
+
+		users = User.objects.filter(username=pars_user[k])
+		if users.count() == 0:
+			messages.add_message(request, messages.ERROR, 'Нет такого пользователя')
+			return redirect('/')
+		else:
+
+			user_keywords[k_db] = users[0]
+
+
+	probs = Problem.objects.filter(
+		**pars_keywords,
+		**user_keywords
+	)
 
 	if probs.count() == 0:
 		return render(
@@ -26,13 +57,19 @@ def index(request):
 			{'title': 'Все жалобы', 'user': request.user}
 		)
 
+	if not request.user.is_authenticated:
+		admin = False
+	else:
+		admin = UserProfile.objects.filter(user=request.user)[0].admin
+
 	return render(
 		request, 'index.html',
 		{
 			'title': 'Все жалобы',
 			'user': request.user,
-			'probs': probs,
 			'status_variants': Problem.status_variants,
+			'probs': probs,
+			'admin': admin,
 		}
 	)
 
@@ -78,6 +115,8 @@ def register(request):
 
 		user = User.objects.create_user(username=username, password=password)
 		user.save()
+
+		user_profile = UserProfile(user=user, admin=False)
 
 		login(request, user)
 
