@@ -26,16 +26,14 @@ def index(request):
 	pars_user = {}
 	for k, v in list(request.GET.items()):
 		if v:
-			if k not in ('username', 'fixer'):
+			if k not in ('user', 'fixer'):
 				pars_keywords[k] = v
 			else:
 				pars_user[k] = v
 
 
-	replace = {'username': 'user'}
 	user_keywords = {}
 	for k, v in pars_user.items():
-		k_db = replace.get(k, k)
 
 		users = User.objects.filter(username=pars_user[k])
 		if users.count() == 0:
@@ -43,7 +41,7 @@ def index(request):
 			return redirect('/')
 		else:
 
-			user_keywords[k_db] = users[0]
+			user_keywords[k] = users[0]
 
 
 	probs = Problem.objects.filter(
@@ -61,6 +59,7 @@ def index(request):
 		admin = False
 	else:
 		admin = UserProfile.objects.filter(user=request.user)[0].admin
+
 
 	return render(
 		request, 'index.html',
