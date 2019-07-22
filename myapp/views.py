@@ -25,6 +25,7 @@ def index(request):
 	pars_keywords = {}
 	pars_user = {}
 	for k, v in list(request.GET.items()):
+
 		if v:
 			if k not in ('user', 'fixer'):
 				pars_keywords[k] = v
@@ -55,11 +56,12 @@ def index(request):
 			{'title': 'Все жалобы', 'user': request.user}
 		)
 
-	if not request.user.is_authenticated:
-		admin = False
-	else:
-		admin = UserProfile.objects.filter(user=request.user)[0].admin
+	admin = False
+	if request.user.is_authenticated:
+		profiles = UserProfile.objects.filter(user=request.user, admin=True)
 
+		if profiles.count() != 0:
+			admin = True
 
 	return render(
 		request, 'index.html',
